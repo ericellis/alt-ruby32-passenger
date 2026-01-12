@@ -1,7 +1,7 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Julian Brown <julian.brown@cpanel.net>
 Date: Wed, 2 Jun 2021 10:12:18 -0500
-Subject: [PATCH 5/7] Add the instance registry path for the ea-ruby27 SCL path
+Subject: [PATCH 5/7] Add the instance registry path for the alt-ruby32 SCL path
 
 to the default list
 ---
@@ -17,7 +17,7 @@ index 88a7fcf..d8cdb4c 100644
          # TMPDIR and users use /tmp, however the path is often too long because socket paths can
          # only be up to 108 characters long.
 -        [string_env("TMPDIR"), "/tmp", "/var/run/passenger-instreg",*Dir['/tmp/systemd-private-*-{httpd,nginx,apache2}.service-*/tmp']].compact
-+        [string_env("TMPDIR"), "/tmp", "/var/run/passenger-instreg", "/opt/cpanel/ea-ruby27/root/usr/var/run/passenger-instreg", *Dir['/tmp/systemd-private-*-{httpd,nginx,apache2}.service-*/tmp']].compact
++        [string_env("TMPDIR"), "/tmp", "/var/run/passenger-instreg", "/opt/alt/ruby32/root/var/run/passenger-instreg", *Dir['/tmp/systemd-private-*-{httpd,nginx,apache2}.service-*/tmp']].compact
        end
  
        def string_env(name)

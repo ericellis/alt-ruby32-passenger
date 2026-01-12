@@ -2,9 +2,9 @@
 %define _enable_debug_packages %{nil}
 
 # Defining the package namespace
-%global ns_name ea
-%global ns_dir /opt/cpanel
-%global pkg ruby27
+%global ns_name alt
+%global ns_dir /opt/alt
+%global pkg ruby32
 %global gem_name passenger
 %global bundled_boost_version 1.87.0
 
@@ -20,7 +20,7 @@
 %global passenger_libdir    %{_datadir}/passenger
 %global passenger_archdir   %{_libdir}/passenger
 %global passenger_agentsdir %{_libexecdir}/passenger
-%define ruby_vendorlibdir   %(scl enable ea-ruby27 "ruby -rrbconfig -e 'puts RbConfig::CONFIG[%q|vendorlibdir|]'")
+%define ruby_vendorlibdir   %(scl enable alt-ruby32 "ruby -rrbconfig -e 'puts RbConfig::CONFIG[%q|vendorlibdir|]'")
 
 # Doing release_prefix this way for Release allows for OBS-proof versioning, See EA-4590 for more details
 %define release_prefix 1
@@ -55,21 +55,21 @@ Source10: apache-passenger.conf.in
 Source12: config.json
 # These scripts are needed only before we update httpd24-httpd.service
 # in rhel7 to allow enabling extra SCLs.
-Source13: ea-ruby27
+Source13: alt-ruby32
 Source14: passenger_apps.default
 Source15: update_ruby_shebang.pl
 
 # Use upstream libuv instead of the bundled libuv
 Patch0:         0001-Patch-build-files-to-use-SCL-libuv-paths.patch
 # httpd on RHEL7 is using private /tmp. This break passenger status.
-# We workaround that by using "/var/run/ea-ruby27-passenger" instead of "/tmp".
+# We workaround that by using "/var/run/alt-ruby32-passenger" instead of "/tmp".
 Patch1:         0002-Avoid-using-tmp-for-the-TMPDIR.patch
 # Load passenger_native_support.so from lib_dir
 Patch2:         0003-Fix-the-path-for-passenger_native_support.patch
 # Supress logging of empty messages
 Patch3:         0004-Suppress-logging-of-empty-messages.patch
 # Update the instance registry paths to include the SCL path
-Patch4:         0005-Add-the-instance-registry-path-for-the-ea-ruby27-SCL.patch
+Patch4:         0005-Add-the-instance-registry-path-for-the-alt-ruby32-SCL.patch
 # Build against ea-libcurl
 Patch5:         0006-Use-ea-libcurl-instead-of-system-curl.patch
 # Add a new directive to Passenger that will allow us to disallow
@@ -212,27 +212,27 @@ for script in `find . -type f ! -perm /a+x -name "*.rb"`; do
 done
 
 %build
-# Build the complete Passenger and shared module against ruby27.
+# Build the complete Passenger and shared module against ruby32.
 
-%{?scl:scl enable ea-ruby27 - << \EOF}
+%{?scl:scl enable alt-ruby32 - << \EOF}
 export LD_LIBRARY_PATH=%{_libdir}:$LD_LIBRARY_PATH
 export USE_VENDORED_LIBEV=true
 export USE_VENDORED_LIBUV=false
-export GEM_PATH=%{gem_dir}:${GEM_PATH:+${GEM_PATH}}${GEM_PATH:-`scl enable ea-ruby27 -- ruby -e "print Gem.path.join(':')"`}
+export GEM_PATH=%{gem_dir}:${GEM_PATH:+${GEM_PATH}}${GEM_PATH:-`scl enable alt-ruby32 -- ruby -e "print Gem.path.join(':')"`}
 CFLAGS="${CFLAGS:-%optflags}" ; export CFLAGS ;
 CXXFLAGS="${CXXFLAGS:-%optflags}" ; export CXXFLAGS ;
 %if 0%{?rhel} < 8
-EXTRA_CXX_LDFLAGS="-L/opt/cpanel/ea-ruby27/root/usr/lib64 -L/opt/cpanel/ea-openssl11/%{_lib} -L/opt/cpanel/ea-brotli/%{_lib} -Wl,-rpath=/opt/cpanel/ea-openssl11/%{_lib} -Wl,-rpath=/opt/cpanel/ea-brotli/%{_lib} -Wl,-rpath=/opt/cpanel/libcurl/%{_lib}  -Wl,-rpath=%{_libdir},--enable-new-dtags "; export EXTRA_CXX_LDFLAGS;
+EXTRA_CXX_LDFLAGS="-L/opt/alt/ruby32/root/usr/lib64 -L/opt/cpanel/ea-openssl11/%{_lib} -L/opt/cpanel/ea-brotli/%{_lib} -Wl,-rpath=/opt/cpanel/ea-openssl11/%{_lib} -Wl,-rpath=/opt/cpanel/ea-brotli/%{_lib} -Wl,-rpath=/opt/cpanel/libcurl/%{_lib}  -Wl,-rpath=%{_libdir},--enable-new-dtags "; export EXTRA_CXX_LDFLAGS;
 %else
-EXTRA_CXX_LDFLAGS="-L/opt/cpanel/ea-ruby27/root/usr/lib64 -L/usr/lib64 -lcurl -lssl -lcrypto -lgssapi_krb5 -lkrb5 -lk5crypto -lkrb5support -lssl -lcrypto -lssl -lcrypto -Wl,-rpath=%{_libdir},--enable-new-dtags -lssl -lcrypto -lssl -lcrypto -lssl -lcrypto -lssl -lcrypto -lssl -lcrypto "; export EXTRA_CXX_LDFLAGS;
+EXTRA_CXX_LDFLAGS="-L/opt/alt/ruby32/root/usr/lib64 -L/usr/lib64 -lcurl -lssl -lcrypto -lgssapi_krb5 -lkrb5 -lk5crypto -lkrb5support -lssl -lcrypto -lssl -lcrypto -Wl,-rpath=%{_libdir},--enable-new-dtags -lssl -lcrypto -lssl -lcrypto -lssl -lcrypto -lssl -lcrypto -lssl -lcrypto "; export EXTRA_CXX_LDFLAGS;
 %endif
 
 FFLAGS="${FFLAGS:-%optflags}" ; export FFLAGS;
 
 %if 0%{?rhel} < 8
-export EXTRA_CXXFLAGS="-I/opt/cpanel/ea-openssl11/include -I/opt/cpanel/libcurl/include -I/opt/cpanel/ea-ruby27/root/usr/include"
+export EXTRA_CXXFLAGS="-I/opt/cpanel/ea-openssl11/include -I/opt/cpanel/libcurl/include -I/opt/alt/ruby32/root/usr/include"
 %else
-export EXTRA_CXXFLAGS="-I/opt/cpanel/ea-ruby27/root/usr/include -I/usr/include"
+export EXTRA_CXXFLAGS="-I/opt/alt/ruby32/root/usr/include -I/usr/include"
 %endif
 
 export LANG=en_US.UTF-8
@@ -257,18 +257,18 @@ rake fakeroot \
 
 find . -name "*.py" -print | xargs sed -i '1s:^#!.*python.*$:#!/usr/bin/python2:'
 
-find . -name "*.rb" -print | xargs sed -i '1s:^#!.*ruby.*$:#!/opt/cpanel/ea-ruby27/root/usr/bin/ruby:'
+find . -name "*.rb" -print | xargs sed -i '1s:^#!.*ruby.*$:#!/opt/alt/ruby32/root/usr/bin/ruby:'
 
 %install
 
-mkdir -p %{buildroot}/opt/cpanel/ea-ruby27/src/passenger-release-%{version}/
-tar xzf %{SOURCE0} -C %{buildroot}/opt/cpanel/ea-ruby27/src/
-tar xzf %{SOURCE3} -C %{buildroot}/opt/cpanel/ea-ruby27/src/passenger-release-%{version}/
+mkdir -p %{buildroot}/opt/alt/ruby32/src/passenger-release-%{version}/
+tar xzf %{SOURCE0} -C %{buildroot}/opt/alt/ruby32/src/
+tar xzf %{SOURCE3} -C %{buildroot}/opt/alt/ruby32/src/passenger-release-%{version}/
 
 # Remove test directories that contain Python 3 syntax incompatible with Python 2 byte-compilation
-rm -rf %{buildroot}/opt/cpanel/ea-ruby27/src/passenger-release-%{version}/test/
+rm -rf %{buildroot}/opt/alt/ruby32/src/passenger-release-%{version}/test/
 
-%{?scl:scl enable ea-ruby27 - << \EOF}
+%{?scl:scl enable alt-ruby32 - << \EOF}
 export USE_VENDORED_LIBEV=true
 export USE_VENDORED_LIBUV=false
 
@@ -289,7 +289,7 @@ install -pm 0755 buildout/apache2/mod_passenger.so %{buildroot}/%{_httpd_moddir}
 # Install Apache config.
 mkdir -p %{buildroot}%{_httpd_confdir} %{buildroot}%{_httpd_modconfdir}
 sed -e 's|@PASSENGERROOT@|%{passenger_libdir}/phusion_passenger/locations.ini|g' %{SOURCE10} > passenger.conf
-sed -i 's|@PASSENGERDEFAULTRUBY@|%{_libexecdir}/passenger-ruby27|g' passenger.conf
+sed -i 's|@PASSENGERDEFAULTRUBY@|%{_libexecdir}/passenger-ruby32|g' passenger.conf
 sed -i 's|@PASSENGERSO@|%{_httpd_moddir}/mod_passenger.so|g' passenger.conf
 sed -i 's|@PASSENGERINSTANCEDIR@|%{_localstatedir}/run/passenger-instreg|g' passenger.conf
 
@@ -297,10 +297,10 @@ mkdir -p %{buildroot}/var/cpanel/templates/apache2_4
 # keep version agnostic name for old ULCs :(
 install -m 0640 %{SOURCE14} %{buildroot}/var/cpanel/templates/apache2_4/passenger_apps.default
 # have version/package specific name for new ULCs :)
-install -m 0640 %{SOURCE14} %{buildroot}/var/cpanel/templates/apache2_4/ruby27-mod_passenger.appconf.default
+install -m 0640 %{SOURCE14} %{buildroot}/var/cpanel/templates/apache2_4/ruby32-mod_passenger.appconf.default
 
 mkdir -p %{buildroot}/etc/cpanel/ea4
-echo -n %{_libexecdir}/passenger-ruby27 > %{buildroot}/etc/cpanel/ea4/passenger.ruby
+echo -n %{_libexecdir}/passenger-ruby32 > %{buildroot}/etc/cpanel/ea4/passenger.ruby
 
 # do python3 (and not worry about systems w/ only /usr/bin/python) because:
 #    1. python3 is not EOL
@@ -320,7 +320,7 @@ install -pm 0644 passenger.conf %{buildroot}%{_httpd_confdir}/passenger.conf
 
 # Install wrapper script to allow using the SCL Ruby binary via apache
 %{__mkdir_p} %{buildroot}%{_libexecdir}/
-install -pm 0755 %{SOURCE13} %{buildroot}%{_libexecdir}/passenger-ruby27
+install -pm 0755 %{SOURCE13} %{buildroot}%{_libexecdir}/passenger-ruby32
 
 # Move agents to libexec
 mkdir -p %{buildroot}/%{passenger_agentsdir}
@@ -369,12 +369,12 @@ rm -rf %{buildroot}%{_bindir}/passenger-install-*-module
 mkdir -p %{buildroot}%{ruby_vendorlibdir}/passenger
 cp %{buildroot}/%{passenger_archdir}/*.so %{buildroot}%{ruby_vendorlibdir}/passenger/
 
-cd %{buildroot}/opt/cpanel/ea-ruby27/src
+cd %{buildroot}/opt/alt/ruby32/src
 perl %{SOURCE15}
 cd -
 
 %check
-%{?scl:scl enable ea-ruby27 - << \EOF}
+%{?scl:scl enable alt-ruby32 - << \EOF}
 export USE_VENDORED_LIBEV=true
 export USE_VENDORED_LIBUV=false
 
@@ -395,21 +395,21 @@ export USE_VENDORED_LIBUV=false
 
 %pre -n %{scl_prefix}mod_passenger
 
-if [ -e "%{_localstatedir}/lib/rpm-state/ea-ruby27-passenger/has_python_conf" ] ; then
-    unlink %{_localstatedir}/lib/rpm-state/ea-ruby27-passenger/has_python_conf
+if [ -e "%{_localstatedir}/lib/rpm-state/alt-ruby32-passenger/has_python_conf" ] ; then
+    unlink %{_localstatedir}/lib/rpm-state/alt-ruby32-passenger/has_python_conf
 fi
 
 if [ -e "/etc/cpanel/ea4/passenger.python" ] ; then
     echo "Has existing python configuration, will leave that as is …"
-    mkdir -p %{_localstatedir}/lib/rpm-state/ea-ruby27-passenger
-    touch %{_localstatedir}/lib/rpm-state/ea-ruby27-passenger/has_python_conf
+    mkdir -p %{_localstatedir}/lib/rpm-state/alt-ruby32-passenger
+    touch %{_localstatedir}/lib/rpm-state/alt-ruby32-passenger/has_python_conf
 else
     echo "Will verify new python configuration …"
 fi
 
 %posttrans -n %{scl_prefix}mod_passenger
 
-if [ ! -f "%{_localstatedir}/lib/rpm-state/ea-ruby27-passenger/has_python_conf" ] ; then
+if [ ! -f "%{_localstatedir}/lib/rpm-state/alt-ruby32-passenger/has_python_conf" ] ; then
     echo "… Ensuring new python configuration is valid …";
     if [ ! -x "/usr/bin/python3" ] ; then
         echo "… no python3, trying python …"
@@ -422,7 +422,7 @@ if [ ! -f "%{_localstatedir}/lib/rpm-state/ea-ruby27-passenger/has_python_conf" 
         fi
     fi
 else
-    echo "… using previous python configuration"
+    echo "… using previous python configuration"
 fi
 
 RESTART_NEEDED=""
@@ -431,7 +431,7 @@ UPDATE_USERDATA='my ($y, $r)=@ARGV;my $u="";my $apps=eval {Cpanel::JSON::LoadFil
 UPDATE_INCLUDES='my $ch="";my $obj=Cpanel::Config::userdata::PassengerApps->new({user=>$ARGV[0]});my $apps=$obj->list_applications();for my $name (keys %{$apps}) {my $data=$apps->{$name};if ($data->{enabled}) {$obj->generate_apache_conf($name);$ch++;}}print $ch;'
 
 for appconf in $(ls /var/cpanel/userdata/*/applications.json 2>/dev/null); do
-    REGEN_USER=$($PERL -MCpanel::JSON -e "$UPDATE_USERDATA" $appconf /opt/cpanel/ea-ruby24/root/usr/libexec/passenger-ruby24)
+    REGEN_USER=$($PERL -MCpanel::JSON -e "$UPDATE_USERDATA" $appconf /opt/alt/ruby32/root/usr/libexec/passenger-ruby32)
 
     if [ ! -z "$REGEN_USER" ]; then
         MADE_CHANGES=$($PERL -MCpanel::Config::userdata::PassengerApps -e "$UPDATE_INCLUDES" $REGEN_USER)
@@ -472,7 +472,7 @@ fi
 
 %files -n %{?scl:%scl_prefix}ruby-wrapper
 %doc LICENSE CONTRIBUTORS CHANGELOG
-%{_libexecdir}/passenger-ruby27
+%{_libexecdir}/passenger-ruby32
 
 %files doc
 %doc %{_docdir}/passenger
@@ -483,13 +483,16 @@ fi
 %config(noreplace) %{_httpd_confdir}/*.conf
 %endif
 /var/cpanel/templates/apache2_4/passenger_apps.default
-/var/cpanel/templates/apache2_4/ruby27-mod_passenger.appconf.default
+/var/cpanel/templates/apache2_4/ruby32-mod_passenger.appconf.default
 /etc/cpanel/ea4/passenger.ruby
 %config(noreplace) /etc/cpanel/ea4/passenger.python
 %{_httpd_moddir}/mod_passenger.so
-/opt/cpanel/ea-ruby27/src/passenger-release-%{version}/
+/opt/alt/ruby32/src/passenger-release-%{version}/
 
 %changelog
+* Sun Jan 12 2026 Your Name <your.email@example.com> - 6.1.1-1
+- Ported to alt-ruby32 from ea-ruby27-passenger
+
 * Tue Dec 23 2025 Cory McIntire <cory.mcintire@webpros.com> - 6.1.1-1
 - EA-13307: Update ea-ruby27-passenger from v6.1.0 to v6.1.1
 
@@ -579,4 +582,3 @@ fi
 
 * Tue Sep 08 2020 Julian Brown <julian.brown@cpanel.net> - 6.0.6-1
 - ZC-7508: Initial Commit
-
